@@ -1,0 +1,115 @@
+﻿@*@page "/groceries/{groceryItemId}"*@
+
+@attribute [Authorize]
+
+<PageTitle>Item Details</PageTitle>
+
+@if (Initialized)
+{
+    <!-- DefaultFocus="DefaultFocus.FirstChild" -->
+    <MudDialog>
+        <DialogContent>
+            
+            <MudContainer MaxWidth="@MaxWidth.ExtraLarge">
+                <MudGrid>
+                    <!-- Badge -->
+                    <!-- <MudTextField bind-Value="GroceryItem.Id" Label="Id" ReadOnly="true" /> -->
+                    <MudItem md="12">
+                        <!-- Label, Abc, Info, Title -->
+                        <MudAutocomplete @bind-Value="GroceryItem.Name" @bind-Text="GroceryItem.Name" SearchFunc="OnSearchGroceryItems"
+                                            Dense="true" Immediate="true" Required="true" SelectOnClick="false" SelectValueOnTab="false"
+                                            Adornment="@Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Abc" />
+                    </MudItem>
+                    <MudItem sm="12" md="6">
+                        <!-- LastClock, Cake, CalendarMonth, CalendarToday -->
+                        <MudDatePicker Date="GroceryItem.DateCreated.ToLocalTime().DateTime" Label="Date Created" DateFormat="yyyy-MM-dd HH:mm" Disabled="true" />
+                    </MudItem>
+                    <MudItem sm="12" md="6">
+                        <!-- LastClock, Cake, CalendarMonth, CalendarToday -->
+                        <MudDatePicker Date="GroceryItem.DateModified.ToLocalTime().DateTime" Label="Date Modified" DateFormat="yyyy-MM-dd HH:mm" Disabled="true" />
+                    </MudItem>
+                    <!-- <MudTextField bind-Value="GroceryItem.IsChecked" Label="IsChecked" ReadOnly="true" /> -->
+                    <MudItem sm="12" md="6">
+                        <MudSelect @bind-Value="GroceryItem.Store" Label="Store" Dense="true" Clearable="true"
+                                   Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Store">
+                            @foreach (string store in Stores)
+                            {
+                                <MudSelectItem Value="@store">@store</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem sm="12" md="6">
+                        <MudSelect @bind-Value="GroceryItem.Brand" Label="Brand" Dense="true" Clearable="true"
+                                   Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Business">
+                            @foreach (string brand in Brands)
+                            {
+                                <MudSelectItem Value="@brand">@brand</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem sm="12" md="6">
+                        <MudSelect @bind-Value="GroceryItem.Department" Label="Department" Dense="true" Clearable="true"
+                                   Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Agriculture">
+                            @foreach (string department in Departments)
+                            {
+                                <MudSelectItem Value="@department">@department</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem sm="12" md="6">
+                        <MudNumericField @bind-Value="GroceryItem.Quantity" Adornment="Adornment.Start" Label="Quantity" AdornmentIcon="@(Icons.Material.Filled.Numbers)" />
+                    </MudItem>
+                    <MudItem sm="12" md="6">
+                        <MudSelect @bind-Value="GroceryItem.QuantityType" Label="Quantity Type" Dense="true" Clearable="true"
+                                   Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Scale">
+                            @foreach (string quantityType in QuantityTypes)
+                            {
+                                <MudSelectItem Value="@quantityType">@quantityType</MudSelectItem>
+                            }
+                        </MudSelect>            
+                    </MudItem>
+                    <MudItem sm="12" md="6">
+                        <!-- Casino, Emergency, Visibility, FastForward, Flag, Hourglass -->
+                        <MudField Variant="Variant.Text" Adornment="Adornment.Start" Label="High Priority" InnerPadding="false"
+                                  AdornmentIcon="@(GroceryItem.HighPriority is null ? Icons.Material.Filled.Emergency : (GroceryItem.HighPriority.Value ? Icons.Material.Filled.PriorityHigh : Icons.Material.Filled.LowPriority))"
+                                  AdornmentColor="@(GroceryItem.HighPriority is null ? Color.Default : (GroceryItem.HighPriority.Value ? Color.Error : Color.Warning))">
+                            <MudCheckBox @bind-Checked="GroceryItem.HighPriority" TriState="true" Dense="true" />
+                        </MudField>
+                    </MudItem>
+                </MudGrid>
+            </MudContainer>
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary" OnClick="Save">Save</MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter, EditorRequired] public GroceryItemDto GroceryItem { get; set; }
+    [Parameter, EditorRequired] public Func<string, Task<IEnumerable<string>>> OnSearchGroceryItems { get; set; }
+
+    protected IReadOnlyList<string> Stores { get; set; } = new[] { "Costco", "Super Store", "Shoppers Drug Mart", "Amazon", "Best Buy", "Canadian Tire", "Home Depot", "Marks", "Sport Chek", "PetSmart", "Other" };
+    protected IReadOnlyList<string> Brands { get; set; } = new[] { "Kirland", "No Name", "President's Choice" , "Dove", "Heinz", "3M" };
+    protected IReadOnlyList<string> Departments { get; set; } = new[] { "Produce", "Dry Goods", "Beverages", "Baking", "Frozen", "Dairy", "Bakery", "Meat", "Deli", "Seafood", "Household", "Health & Beauty", "Pet", "Alcohol", "Other" };
+    protected IReadOnlyList<string> QuantityTypes { get; set; } = new[] { "Item", "tsp.", "fl oz", "c", "mL", "L", "gal", "lb", "oz", "mg", "g", "kg" };
+    protected bool Initialized { get; set; }
+
+    protected override void OnInitialized() => Initialized = true;
+
+    /*async Task<IEnumerable<string>> SearchGroceryItems(string value)
+    {
+        // if text is null or empty, show complete list
+        if (string.IsNullOrEmpty(value))
+            return AllKnownGroceryItems;
+
+        return AllKnownGroceryItems.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }*/
+
+    void Save() => MudDialog.Close(GroceryItem); // MudDialog.Close(DialogResult.Ok(1)); // ~1 = Add, 2 = Update, 3 = Delete, 4 = Cancel
+    void Cancel() => MudDialog.Cancel();
+}

@@ -1,39 +1,47 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">WebApp</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject NavigationManager Navigation
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="oi oi-plus" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="fetchdata">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
-            </NavLink>
-        </div>
-    </nav>
-</div>
+@if (Initialized)
+{
+    <AuthorizeView>
+        <Authorized>
+            <MudAppBar Color="Color.Dark" Fixed="false" Elevation="0">
+                @*<MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" />*@
+                <MudSpacer />            
+                <!-- BottomLeft & TopCenter vs BottomCenter & TopRight -->
+                <MudMenu StartIcon="@Icons.Material.Filled.AccountCircle" Label="@context.User.Identity?.Name" Dense="true" ActivationEvent="@MouseEvent.MouseOver" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopRight">
+                    <ChildContent>
+                        <MudMenuItem AutoClose="false" Icon="@(!OfflineManager.IsOffline ? Icons.Material.Filled.DownloadForOffline : Icons.Material.Filled.DownloadDone)" IconColor="@(!OfflineManager.IsOffline ? Color.Success : Color.Warning)" OnClick="@OfflineManager.ToggleIsOffline" Class="m-0">
+                            @(!OfflineManager.IsOffline ? "Online" : "Offline") Mode
+                        </MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="@BeginLogOut">
+                            Log out
+                        </MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
+            </MudAppBar>
+        </Authorized>
+        <NotAuthorized>
+            <MudAppBar Color="Color.Dark" Fixed="false" Elevation="0">
+                <MudButton Color="Color.Default" Variant="Variant.Filled" Href="authentication/login">Login</MudButton>
+            </MudAppBar>
+        </NotAuthorized>
+    </AuthorizeView>
+}
 
 @code {
-    private bool collapseNavMenu = true;
+    protected bool Initialized { get; set; }
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    [Inject] private IOfflineManagerService OfflineManager { get; set; } = null!;
 
-    private void ToggleNavMenu()
+    protected override void OnInitialized()
     {
-        collapseNavMenu = !collapseNavMenu;
+        Initialized = true;
+    }
+
+    protected void BeginLogOut()
+    {
+        Navigation.NavigateToLogout("authentication/logout");
     }
 }

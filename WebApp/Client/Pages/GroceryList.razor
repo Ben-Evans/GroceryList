@@ -1,0 +1,139 @@
+﻿@page "/groceries"
+
+@attribute [Authorize]
+
+<PageTitle>Groceries</PageTitle>
+
+@if (Initialized)
+{
+    <MudContainer MaxWidth="@MaxWidth.ExtraLarge">
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="12">
+                <MudPaper Elevation="25">
+                    <MudToolBar>
+                        <!-- Modify "mode" here? ie. Draft, Review, Publish -->
+                        <!-- OnClose vs OnBlur vs OnInternalInputChanged -- value seems to need to be set twice to actually active, might be void vs Task related? -->
+                        <MudSelect @bind-Value="SortByValue" Label="Sort by" Dense="true" OnInternalInputChanged="@ApplyFilterAndSort"
+                                   Adornment="@Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Sort" AdornmentColor="@Color.Info" IconSize="@(!IsMobile ? Size.Medium : Size.Small)">
+                            @foreach (var sortValue in ListSortValues)
+                            {
+                                <MudSelectItem Value="@sortValue">@sortValue</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudSelect @bind-SelectedValues="FilterByStoreValues" OnInternalInputChanged="@ApplyFilterAndSort" MultiSelection="true"
+                                   Label="Filter by Store" Dense="true" Clearable="true" Placeholder="Show All" OnClearButtonClick="@ApplyFilterAndSort"
+                                   Adornment="@Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Store" AdornmentColor="@Color.Info" IconSize="@(!IsMobile ? Size.Medium : Size.Small)">
+                            @foreach (var storeValue in ListStoreValues)
+                            {
+                                <MudSelectItem Value="@storeValue">@storeValue</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudSelect @bind-SelectedValues="FilterByDepartmentValues" OnInternalInputChanged="@ApplyFilterAndSort" MultiSelection="true"
+                                   Label="Filter by Department" Dense="true" Clearable="true" Placeholder="Show All" OnClearButtonClick="@ApplyFilterAndSort"
+                                   Adornment="@Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Agriculture" AdornmentColor="@Color.Info" IconSize="@(!IsMobile ? Size.Medium : Size.Small)">
+                            @foreach (var departmentValue in ListDepartmentValues)
+                            {
+                                <MudSelectItem Value="@departmentValue">@departmentValue</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <!-- Show/Hide checked & deleted? -->
+                    </MudToolBar>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="@(!IsOffline ? 8 : 12)">
+                <MudList DisablePadding="true">
+                    @foreach (var groceryItemDto in FilteredGroceryItems)
+                    {
+                        @* Disabled="@IsOffline" *@
+                        <MudListItem Avatar="@Icons.Material.Filled.BrokenImage" IconColor="Color.Dark" IconSize="@(!IsMobile ? Size.Medium : Size.Small)" Dense="true" DisableGutters="true">
+
+                            <MudField Variant="Variant.Outlined" DisableUnderLine="true" InnerPadding="false"
+                                      Adornment="Adornment.Start" AdornmentColor="Color.Primary" OnAdornmentClick="@(() => OnCheck(groceryItemDto))" IconSize="@(!IsMobile ? Size.Medium : Size.Small)"
+                                      AdornmentIcon="@(groceryItemDto.IsChecked ? Icons.Material.Filled.CheckBox : Icons.Material.Filled.CheckBoxOutlineBlank)">
+
+                                <MudField Variant="Variant.Text" DisableUnderLine="true" InnerPadding="false" Margin="@Margin.None"
+                                          Adornment="@(!IsOffline ? Adornment.End : Adornment.None)" AdornmentIcon="@Icons.Material.Filled.Delete" OnAdornmentClick="@(() => OnDelete(groceryItemDto))">
+
+                                    <MudAutocomplete @bind-Value="groceryItemDto.Name" @bind-Text="groceryItemDto.Name" OnBlur="@(() => OnUpdate(groceryItemDto))" SearchFunc="@SearchGroceryItems"
+                                                     Dense="true" Margin="@Margin.None" Immediate="true" Required="true" SelectOnClick="false" SelectValueOnTab="false" ReadOnly="@IsOffline" DisableUnderLine="@IsOffline"
+                                                     Adornment="@(!IsOffline ? Adornment.End : Adornment.None)" AdornmentIcon="@Icons.Material.Filled.Edit" OnAdornmentClick="@(() => OpenItemDetails(groceryItemDto))" />
+                                </MudField>
+                                
+                                @if (!string.IsNullOrWhiteSpace(groceryItemDto.Department))
+                                {
+                                    <!-- Category | Agriculture, Liquor, Pets, Yard -->
+                                    <MudChip Icon="@Icons.Material.Filled.Category" Color="Color.Tertiary" Size="@(!IsMobile ? Size.Medium : Size.Small)" Label="true">@groceryItemDto.Department</MudChip>
+                                }
+
+                                @if (groceryItemDto.HighPriority is not null)
+                                {
+                                    <MudChip Icon="@(groceryItemDto.HighPriority.Value ? Icons.Material.Filled.PriorityHigh : Icons.Material.Filled.LowPriority)"
+                                             Color="@(groceryItemDto.HighPriority.Value ? Color.Error : Color.Success)" Size="@(!IsMobile ? Size.Medium : Size.Small)" Label="true">
+                                        Priority
+                                    </MudChip>
+                                }
+
+                                @if (!string.IsNullOrWhiteSpace(groceryItemDto.Store))
+                                {
+                                    <!-- Store, Place -->
+                                    <MudChip Icon="@Icons.Material.Filled.Store" IconColor="Color.Info" Size="@(!IsMobile ? Size.Medium : Size.Small)" Label="true">@groceryItemDto.Store</MudChip>
+                                }
+
+                                @if (!string.IsNullOrWhiteSpace(groceryItemDto.Brand))
+                                {
+                                    <!-- Business, Shop, ShippingBag, ShoppingBasket, ShoppingCart, Work -->
+                                    <MudChip Icon="@Icons.Material.Filled.Business" Color="Color.Warning" Size="@(!IsMobile ? Size.Medium : Size.Small)" Label="true">@groceryItemDto.Brand</MudChip>
+                                }
+
+                                @if (groceryItemDto.Quantity > 0)
+                                {
+                                    <!-- Analytics, Architecture, Balance, Scale -->
+                                    <MudChip Icon="@Icons.Material.Filled.Scale" Color="Color.Secondary" Size="@(!IsMobile ? Size.Medium : Size.Small)" Label="true">@groceryItemDto.Quantity @groceryItemDto.QuantityType</MudChip>
+                                }
+                            </MudField>
+                        </MudListItem>
+                    }
+                </MudList>
+            </MudItem>
+
+            @if (!IsOffline)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <!-- Adornment="Adornment.End" AdornmentIcon="Icons.Material.Filled.AddCircle" AdornmentColor="Color.Primary" OnAdornmentClick="(() => OnAdd(AddItemValue))" UserAttributes="(new Dictionary<string, object>() { { "tabindex", "1" } })" -->
+                    <MudField Variant="Variant.Outlined">
+                        <MudAutocomplete Label="Add Item" @bind-Value="AddItemValue" SearchFunc="@SearchGroceryItems" CoerceValue="true" />
+
+                        <MudIconButton Icon="@Icons.Material.Filled.AddCircle" Title="Add Item" OnClick="@(() => OnAdd())" />
+
+                        <MudIconButton Icon="@Icons.Material.Filled.Comment" Title="Add with Details" OnClick="@(async () => await OpenItemDetails(await OnAdd()))" Disabled="true" />
+                    
+                        <!-- Mic & MicOff -->
+                        <MudIconButton Icon="@Icons.Material.Filled.Mic" Title="Dictate" Disabled="true" />
+                    </MudField>
+
+                    <div class="mt-1">
+                        @foreach (string item in QuickAddItems)
+                        {
+                            <MudChip Class="selectable" Color="@Color.Dark" OnClick="@(() => OnAdd(item))">@item</MudChip>
+                        }
+                    </div>
+                </MudItem>
+            }
+        </MudGrid>
+    </MudContainer>
+}
+
+<style>
+    .selectable span {
+        cursor: pointer;
+    }
+
+    /* TODO: Compromise here - 0-16px */
+    /*.mud-input-control > .mud-input-control-input-container > div.mud-input.mud-input-text {
+        margin-top: 0px;
+    }*/
+</style>

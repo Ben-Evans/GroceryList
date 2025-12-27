@@ -1,15 +1,13 @@
 ﻿@inherits LayoutComponentBase
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+    <MudThemeProvider IsDarkMode="true" />
+    <!-- NoHeader="true" Position="DialogPosition.Center" -->
+    <MudDialogProvider MaxWidth="MaxWidth.Large" FullWidth="true" CloseButton="true" DisableBackdropClick="true" CloseOnEscapeKey="true" />
+    <MudSnackbarProvider />
 
     <main>
-        <div class="top-row px-4 auth">
-            <LoginDisplay />
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-        </div>
+        <NavMenu />
 
         <article class="content px-4">
             @Body

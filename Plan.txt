@@ -1,0 +1,24 @@
+Functionality
+
+## Grocery Item
+- Id
+- Name
+- IsChecked
+- Quantity
+- Store
+- Brand
+- Measurement
+- Measurement Type
+- Department
+  - Is Refrigerated
+- High, Low, or unset priority
+- Date Added
+- Date Checked
+
+## Detailed Grocery Item
+- Id
+- Name
+- IsChecked
+- Allow Substitutions
+- Recent prices
+- Notes
