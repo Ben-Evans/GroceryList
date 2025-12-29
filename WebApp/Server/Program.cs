@@ -1,34 +1,43 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.Identity.Web;
-using Microsoft.AspNetCore.OpenApi;
-using WebApp.Shared;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Logging;
+using WebApp.Server;
 using WebApp.Server.DataAccess.DomainModels;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.Extensions.DependencyInjection.Extensions;
+using WebApp.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// Add services to the container.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
 
-builder.Services.AddSqlServer<ApplicationDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
-//builder.Services.AddDbContext<IApplicationDbContext, ApplicationDbContext>();
-builder.Services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
+builder.Services.SetupDatabase(builder.Configuration);
 
-builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages();
+builder.Services.AddAntiforgery();
+
+//builder.Services.AddServices();
+
+string[] corsWhitelist =
+[
+    builder.Configuration.GetValue("BlazorClientBaseAddress", "https://localhost:7182"),
+    builder.Configuration.GetValue("BlazorClientLocalBaseAddress", string.Empty)
+];
+corsWhitelist = [.. corsWhitelist.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct()];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "AllowBlazorClient", policy =>
+    {
+        policy.WithOrigins(corsWhitelist)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
@@ -40,108 +49,20 @@ else
     app.UseHsts();
 }
 
-
-app.UseSwagger();
-app.UseSwaggerUI();
-
 app.UseHttpsRedirection();
-
-app.UseBlazorFrameworkFiles();
-app.UseStaticFiles();
-
 app.UseRouting();
+app.UseCors("AllowBlazorClient");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapRazorPages();
-app.MapControllers();
-app.MapFallbackToFile("index.html");
+app.UseAntiforgery();
+app.MapStaticAssets();
 
 app.MapGet(ApiEndpointPaths.GetGroceryList, async (IApplicationDbContext DbContext) =>
 {
     List<GroceryItem> groceryItems = await DbContext.GroceryItems.ToListAsync();
 
-    /*return new GroceryListDto()
-    {
-        Id = Guid.NewGuid(),
-        Name = "Groceries",
-        Description = "2023-06-12",
-        GroceryItems = new()
-        {
-            new GroceryItemDto()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Ketchup",
-                IsChecked = false,
-                Brand = "Heinz",
-                Department = "Dry Goods",
-                Store = "Costco"
-            },
-            new GroceryItemDto()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Potatoes",
-                IsChecked = false,
-                Department = "Produce",
-                Store = "Super Store",
-                Quantity = 12
-            },
-            new GroceryItemDto()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Bread",
-                IsChecked = false,
-                Department = "Bakery",
-                Store = "Super Store",
-                HighPriority = true
-            },
-            new GroceryItemDto()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Milk",
-                IsChecked = false,
-                Department = "Dairy",
-                Quantity = 8,
-                QuantityType = "L"
-            },
-            new GroceryItemDto()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Pizza",
-                IsChecked = false,
-                Department = "Frozen",
-                HighPriority = false
-            },
-            new GroceryItemDto()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Chicken",
-                IsChecked = false,
-                Department = "Meat",
-                Quantity = 2400,
-                QuantityType = "g"
-            },
-            new GroceryItemDto()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Chips",
-                IsChecked = false,
-                Department = "Dry Goods",
-                HighPriority = true
-            },
-            new GroceryItemDto()
-            {
-                Id = Guid.NewGuid(),
-                Name = "Toothpaste",
-                IsChecked = false,
-                Department = "Health & Beauty",
-                Brand = "Colgate"
-                // Add Type (Fresh Wave, etc)
-            },
-        }
-        //.OrderBy(x => x.IsChecked)
-        //    .ThenBy(x => x.DateAdded)
-    };*/
     return new GroceryListDto()
     {
         Id = Guid.NewGuid(),
@@ -163,8 +84,6 @@ app.MapGet(ApiEndpointPaths.GetGroceryList, async (IApplicationDbContext DbConte
         }).ToList()
     };
 })
-//.WithName("GetWeatherForecast")
-.WithOpenApi()
 .RequireAuthorization();
 
 app.MapPost(ApiEndpointPaths.AddGroceryItem, async (GroceryItemDto GroceryItemDto, IApplicationDbContext DbContext) =>
@@ -193,7 +112,6 @@ app.MapPost(ApiEndpointPaths.AddGroceryItem, async (GroceryItemDto GroceryItemDt
     // TODO: Replace "value" with newly created one
     return Results.Created(ApiEndpointPaths.UpdateGroceryItem, GroceryItemDto);
 })
-.WithOpenApi()
 .RequireAuthorization();
 
 app.MapPut(ApiEndpointPaths.UpdateGroceryItem, async (GroceryItemDto GroceryItemDto, IApplicationDbContext DbContext) =>
@@ -219,7 +137,6 @@ app.MapPut(ApiEndpointPaths.UpdateGroceryItem, async (GroceryItemDto GroceryItem
 
     return Results.NoContent();
 })
-.WithOpenApi()
 .RequireAuthorization();
 
 app.MapPut(ApiEndpointPaths.UpdateGroceryItemIsChecked2, async (Guid groceryItemId, bool isChecked, IApplicationDbContext dbContext) =>
@@ -235,7 +152,6 @@ app.MapPut(ApiEndpointPaths.UpdateGroceryItemIsChecked2, async (Guid groceryItem
 
     return Results.NoContent();
 })
-.WithOpenApi()
 .RequireAuthorization();
 
 app.MapDelete(ApiEndpointPaths.DeleteGroceryItem2, async (Guid groceryItemId, IApplicationDbContext dbContext) =>
@@ -250,7 +166,8 @@ app.MapDelete(ApiEndpointPaths.DeleteGroceryItem2, async (Guid groceryItemId, IA
 
     return Results.NotFound();
 })
-.WithOpenApi()
 .RequireAuthorization();
+
+await app.Services.ApplyMigrationsAndSeedDatabase();
 
 app.Run();
