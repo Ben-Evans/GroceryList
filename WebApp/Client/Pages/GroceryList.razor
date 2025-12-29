@@ -45,7 +45,7 @@
             </MudItem>
 
             <MudItem xs="12" sm="6" md="@(!IsOffline ? 8 : 12)">
-                <MudList DisablePadding="true">
+                <MudList T="string" DisablePadding="true">
                     @foreach (var groceryItemDto in FilteredGroceryItems)
                     {
                         @* Disabled="@IsOffline" *@
@@ -58,7 +58,7 @@
                                 <MudField Variant="Variant.Text" DisableUnderLine="true" InnerPadding="false" Margin="@Margin.None"
                                           Adornment="@(!IsOffline ? Adornment.End : Adornment.None)" AdornmentIcon="@Icons.Material.Filled.Delete" OnAdornmentClick="@(() => OnDelete(groceryItemDto))">
 
-                                    <MudAutocomplete @bind-Value="groceryItemDto.Name" @bind-Text="groceryItemDto.Name" OnBlur="@(() => OnUpdate(groceryItemDto))" SearchFunc="@SearchGroceryItems"
+                                    <MudAutocomplete T="string" @bind-Value="groceryItemDto.Name" @bind-Text="groceryItemDto.Name" OnBlur="@(() => OnUpdate(groceryItemDto))" SearchFunc="@SearchGroceryItems"
                                                      Dense="true" Margin="@Margin.None" Immediate="true" Required="true" SelectOnClick="false" SelectValueOnTab="false" ReadOnly="@IsOffline" DisableUnderLine="@IsOffline"
                                                      Adornment="@(!IsOffline ? Adornment.End : Adornment.None)" AdornmentIcon="@Icons.Material.Filled.Edit" OnAdornmentClick="@(() => OpenItemDetails(groceryItemDto))" />
                                 </MudField>
@@ -105,7 +105,7 @@
                 <MudItem xs="12" sm="6" md="4">
                     <!-- Adornment="Adornment.End" AdornmentIcon="Icons.Material.Filled.AddCircle" AdornmentColor="Color.Primary" OnAdornmentClick="(() => OnAdd(AddItemValue))" UserAttributes="(new Dictionary<string, object>() { { "tabindex", "1" } })" -->
                     <MudField Variant="Variant.Outlined">
-                        <MudAutocomplete Label="Add Item" @bind-Value="AddItemValue" SearchFunc="@SearchGroceryItems" CoerceValue="true" />
+                        <MudAutocomplete T="string" Label="Add Item" @bind-Value="AddItemValue" SearchFunc="@SearchGroceryItems" CoerceValue="true" />
 
                         <MudIconButton Icon="@Icons.Material.Filled.AddCircle" Title="Add Item" OnClick="@(() => OnAdd())" />
 
@@ -118,7 +118,7 @@
                     <div class="mt-1">
                         @foreach (string item in QuickAddItems)
                         {
-                            <MudChip Class="selectable" Color="@Color.Dark" OnClick="@(() => OnAdd(item))">@item</MudChip>
+                            <MudChip T="string" Class="selectable" Color="@Color.Dark" OnClick="@(() => OnAdd(item))">@item</MudChip>
                         }
                     </div>
                 </MudItem>

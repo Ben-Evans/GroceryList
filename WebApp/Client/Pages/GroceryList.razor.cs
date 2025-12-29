@@ -73,7 +73,7 @@ public partial class GroceryList : IBrowserViewportObserver, IAsyncDisposable
 
     private void NetworkConnectionStatusChanged(object? _, bool isOffline) => StateHasChanged();
 
-    async Task<IEnumerable<string>> SearchGroceryItems(string value)
+    protected async Task<IEnumerable<string>> SearchGroceryItems(string value, CancellationToken cancellation)
     {
         // if text is null or empty, show complete list
         if (string.IsNullOrEmpty(value))

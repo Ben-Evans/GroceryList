@@ -16,7 +16,7 @@
                     <!-- <MudTextField bind-Value="GroceryItem.Id" Label="Id" ReadOnly="true" /> -->
                     <MudItem md="12">
                         <!-- Label, Abc, Info, Title -->
-                        <MudAutocomplete @bind-Value="GroceryItem.Name" @bind-Text="GroceryItem.Name" SearchFunc="OnSearchGroceryItems"
+                        <MudAutocomplete T="string" @bind-Value="GroceryItem.Name" @bind-Text="GroceryItem.Name" SearchFunc="OnSearchGroceryItems"
                                             Dense="true" Immediate="true" Required="true" SelectOnClick="false" SelectValueOnTab="false"
                                             Adornment="@Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Abc" />
                     </MudItem>
@@ -73,7 +73,7 @@
                         <MudField Variant="Variant.Text" Adornment="Adornment.Start" Label="High Priority" InnerPadding="false"
                                   AdornmentIcon="@(GroceryItem.HighPriority is null ? Icons.Material.Filled.Emergency : (GroceryItem.HighPriority.Value ? Icons.Material.Filled.PriorityHigh : Icons.Material.Filled.LowPriority))"
                                   AdornmentColor="@(GroceryItem.HighPriority is null ? Color.Default : (GroceryItem.HighPriority.Value ? Color.Error : Color.Warning))">
-                            <MudCheckBox @bind-Checked="GroceryItem.HighPriority" TriState="true" Dense="true" />
+                            <MudCheckBox @bind-Value="GroceryItem.HighPriority" TriState="true" Dense="true" />
                         </MudField>
                     </MudItem>
                 </MudGrid>
@@ -88,10 +88,10 @@
 }
 
 @code {
-    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
 
     [Parameter, EditorRequired] public GroceryItemDto GroceryItem { get; set; }
-    [Parameter, EditorRequired] public Func<string, Task<IEnumerable<string>>> OnSearchGroceryItems { get; set; }
+    [Parameter, EditorRequired] public Func<string, CancellationToken, Task<IEnumerable<string>>> OnSearchGroceryItems { get; set; }
 
     protected IReadOnlyList<string> Stores { get; set; } = new[] { "Costco", "Super Store", "Shoppers Drug Mart", "Amazon", "Best Buy", "Canadian Tire", "Home Depot", "Marks", "Sport Chek", "PetSmart", "Other" };
     protected IReadOnlyList<string> Brands { get; set; } = new[] { "Kirland", "No Name", "President's Choice" , "Dove", "Heinz", "3M" };
@@ -110,6 +110,12 @@
         return AllKnownGroceryItems.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
     }*/
 
-    void Save() => MudDialog.Close(GroceryItem); // MudDialog.Close(DialogResult.Ok(1)); // ~1 = Add, 2 = Update, 3 = Delete, 4 = Cancel
+    void Save()
+    {
+        // TODO: Save item - GroceryItem
+
+        MudDialog.Close(); // MudDialog.Close(DialogResult.Ok(1)); // ~1 = Add, 2 = Update, 3 = Delete, 4 = Cancel
+    }
+
     void Cancel() => MudDialog.Cancel();
 }

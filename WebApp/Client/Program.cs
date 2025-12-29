@@ -2,11 +2,8 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
-using Syncfusion.Blazor;
 using WebApp.Client;
 using WebApp.Client.Services;
-
-//Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MjM5Nzc0NkAzMjMxMmUzMDJlMzBZUzd3dWlBWG9Pc2ZqMXBOcWlUdEV1S09rNDRSNjlIZmNWdUhJM3Q4T0p3PQ==");
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -26,7 +23,6 @@ builder.Services.AddMsalAuthentication(options =>
     options.ProviderOptions.DefaultAccessTokenScopes.Add(builder.Configuration.GetSection("ServerApi")["Scopes"]);
 });
 
-//builder.Services.AddSyncfusionBlazor();
-builder.Services.AddMudServices(); // Updated 6.4.1 => 6.11.0
+builder.Services.AddMudServices();
 
 await builder.Build().RunAsync();
