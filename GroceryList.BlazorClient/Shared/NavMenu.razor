@@ -1,0 +1,46 @@
+﻿@using GroceryList.BlazorClient.Services
+@inject NavigationManager Navigation
+
+@if (Initialized)
+{
+    <AuthorizeView>
+        <Authorized>
+            <MudAppBar Color="Color.Dark" Fixed="false" Elevation="0">
+                @*<MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" />*@
+                <MudSpacer />            
+                <!-- BottomLeft & TopCenter vs BottomCenter & TopRight -->
+                <MudMenu StartIcon="@Icons.Material.Filled.AccountCircle" Label="@context.User.Identity?.Name" Dense="true" ActivationEvent="@MouseEvent.MouseOver" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopRight">
+                    <ChildContent>
+                        <MudMenuItem AutoClose="false" Icon="@(!OfflineManager.IsOffline ? Icons.Material.Filled.DownloadForOffline : Icons.Material.Filled.DownloadDone)" IconColor="@(!OfflineManager.IsOffline ? Color.Success : Color.Warning)" OnClick="@OfflineManager.ToggleIsOffline" Class="m-0">
+                            @(!OfflineManager.IsOffline ? "Online" : "Offline") Mode
+                        </MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="@BeginLogOut">
+                            Log out
+                        </MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
+            </MudAppBar>
+        </Authorized>
+        <NotAuthorized>
+            <MudAppBar Color="Color.Dark" Fixed="false" Elevation="0">
+                <MudButton Color="Color.Default" Variant="Variant.Filled" Href="authentication/login">Login</MudButton>
+            </MudAppBar>
+        </NotAuthorized>
+    </AuthorizeView>
+}
+
+@code {
+    protected bool Initialized { get; set; }
+
+    [Inject] private IOfflineManagerService OfflineManager { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        Initialized = true;
+    }
+
+    protected void BeginLogOut()
+    {
+        Navigation.NavigateToLogout("authentication/logout");
+    }
+}
