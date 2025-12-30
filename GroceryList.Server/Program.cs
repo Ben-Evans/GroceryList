@@ -4,8 +4,17 @@ using GroceryList.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Environment.SetEnvironmentVariable("APP_BASE_DIR", AppContext.BaseDirectory, EnvironmentVariableTarget.Process);
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+
+builder.Host.UseSerilog(Log.Logger);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
@@ -18,21 +27,25 @@ builder.Services.AddAntiforgery();
 
 string[] corsWhitelist =
 [
-    builder.Configuration.GetValue("BlazorClientBaseAddress", "https://localhost:7182"),
+    builder.Configuration.GetValue("BlazorClientBaseAddress", string.Empty),
     builder.Configuration.GetValue("BlazorClientLocalBaseAddress", string.Empty)
 ];
 corsWhitelist = [.. corsWhitelist.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct()];
 
-builder.Services.AddCors(options =>
+bool corsEnabled = corsWhitelist.Length > 0;
+if (corsEnabled)
 {
-    options.AddPolicy(name: "AllowBlazorClient", policy =>
+    builder.Services.AddCors(options =>
     {
-        policy.WithOrigins(corsWhitelist)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        options.AddPolicy(name: "AllowBlazorClient", policy =>
+        {
+            policy.WithOrigins(corsWhitelist)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
     });
-});
+}
 
 var app = builder.Build();
 
@@ -49,13 +62,17 @@ else
 
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseCors("AllowBlazorClient");
+if (corsEnabled)
+    app.UseCors("AllowBlazorClient");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseAntiforgery();
 app.MapStaticAssets();
+
+//app.UseSerilogIngestion();
+app.UseSerilogRequestLogging();
 
 app.MapGet(ApiEndpointPaths.GetGroceryList, async (IApplicationDbContext DbContext) =>
 {
@@ -168,4 +185,16 @@ app.MapDelete(ApiEndpointPaths.DeleteGroceryItem2, async (Guid groceryItemId, IA
 
 await app.Services.ApplyMigrationsAndSeedDatabase();
 
-app.Run();
+try
+{
+    Log.Information("Starting up");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application start-up failed");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

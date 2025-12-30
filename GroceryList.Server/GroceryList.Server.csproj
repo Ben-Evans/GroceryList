@@ -4,7 +4,6 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <WebProject_DirectoryAccessLevelKey>0</WebProject_DirectoryAccessLevelKey>
     <UserSecretsId>cfa97133-9287-4271-b81f-fc105750fc0d</UserSecretsId>
   </PropertyGroup>
 
@@ -20,9 +19,13 @@
     </PackageReference>
 	<PackageReference Include="Microsoft.Identity.Web" Version="4.2.0" />
 	<PackageReference Include="Microsoft.Identity.Web.UI" Version="4.2.0" />
+	<PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+	<!--<PackageReference Include="Serilog.AspNetCore.Ingestion" Version="1.0.0-dev-00032" />-->
+	<PackageReference Include="Serilog.Expressions" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+	<Folder Include="wwwroot\" />
     <ProjectReference Include="..\GroceryList.Shared\GroceryList.Shared.csproj" />
   </ItemGroup>
 
