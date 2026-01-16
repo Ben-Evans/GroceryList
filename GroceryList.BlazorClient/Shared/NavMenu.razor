@@ -1,19 +1,46 @@
 ﻿@using GroceryList.BlazorClient.Services
+@using MudBlazor.Services
+
+@implements IBrowserViewportObserver
+@implements IAsyncDisposable
+
 @inject NavigationManager Navigation
+@inject UiStateService UiStateService
+@inject IBrowserViewportService BrowserViewportService
 
 @if (Initialized)
 {
-    <AuthorizeView>
+    <AuthorizeView Context="authContext">
         <Authorized>
             <MudAppBar Color="Color.Dark" Fixed="false" Elevation="0">
                 @*<MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" />*@
                 <MudSpacer />            
                 <!-- BottomLeft & TopCenter vs BottomCenter & TopRight -->
-                <MudMenu StartIcon="@Icons.Material.Filled.AccountCircle" Label="@context.User.Identity?.Name" Dense="true" ActivationEvent="@MouseEvent.MouseOver" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopRight">
+                <MudMenu StartIcon="@Icons.Material.Filled.AccountCircle" Label="@authContext.User.Identity?.Name" Dense="true" ActivationEvent="@MouseEvent.MouseOver" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopRight">
                     <ChildContent>
+                        <!-- if (IsMobile) -->
+                            <MudMenuItem AutoClose="false" OnClick="@(() => UiStateService.IsShoppingMode = !UiStateService.IsShoppingMode)">
+                                <div class="d-flex align-center justify-space-between w-100">
+                                    <div class="d-flex align-center">
+                                        <MudIcon Icon="@(UiStateService.IsShoppingMode? Icons.Material.Filled.ShoppingCart : Icons.Material.Filled.Edit)"
+                                                 Class="mr-3" Color="Color.Default" />
+                                        <MudText>Shopping Mode</MudText>
+                                    </div>
+                                    <MudSwitch T="bool"
+                                               Value="@UiStateService.IsShoppingMode"
+                                               ValueChanged="@((e) => UiStateService.IsShoppingMode = e)"
+                                               Color="Color.Primary"
+                                               Class="ml-4" />
+                                </div>
+                            </MudMenuItem>
+
+                            <MudDivider />
+                        <!-- } -->
+
                         <MudMenuItem AutoClose="false" Icon="@(!OfflineManager.IsOffline ? Icons.Material.Filled.DownloadForOffline : Icons.Material.Filled.DownloadDone)" IconColor="@(!OfflineManager.IsOffline ? Color.Success : Color.Warning)" OnClick="@OfflineManager.ToggleIsOffline" Class="m-0">
                             @(!OfflineManager.IsOffline ? "Online" : "Offline") Mode
                         </MudMenuItem>
+
                         <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="@BeginLogOut">
                             Log out
                         </MudMenuItem>
@@ -30,17 +57,49 @@
 }
 
 @code {
+    protected bool IsMobile { get; set; }
     protected bool Initialized { get; set; }
+
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
 
     [Inject] private IOfflineManagerService OfflineManager { get; set; } = null!;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        await UiStateService.InitializeAsync();
+
         Initialized = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Subscribe to viewport changes to hide/show the toggle
+            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
+        }
+        base.OnAfterRender(firstRender);
     }
 
     protected void BeginLogOut()
     {
         Navigation.NavigateToLogout("authentication/logout");
+    }
+
+    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
+    {
+        ReportRate = 250,
+        NotifyOnBreakpointOnly = true
+    };
+
+    Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs browserViewportEventArgs)
+    {
+        IsMobile = browserViewportEventArgs.Breakpoint < Breakpoint.Md;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await BrowserViewportService.UnsubscribeAsync(this);
     }
 }

@@ -11,24 +11,24 @@
             <MudContainer MaxWidth="@MaxWidth.ExtraLarge">
                 <MudGrid>
                     <!-- Badge -->
-                    <!-- <MudTextField bind-Value="GroceryItem.Id" Label="Id" ReadOnly="true" /> -->
+                    <!-- <MudTextField bind-Value="tempGroceryItem.Id" Label="Id" ReadOnly="true" /> -->
                     <MudItem md="12">
                         <!-- Label, Abc, Info, Title -->
-                        <MudAutocomplete T="string" @bind-Value="GroceryItem.Name" @bind-Text="GroceryItem.Name" SearchFunc="OnSearchGroceryItems"
+                        <MudAutocomplete T="string" @bind-Value="tempGroceryItem.Name" @bind-Text="tempGroceryItem.Name" SearchFunc="OnSearchGroceryItems"
                                             Dense="true" Immediate="true" Required="true" SelectOnClick="false" SelectValueOnTab="false"
                                             Adornment="@Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Abc" />
                     </MudItem>
                     <MudItem sm="12" md="6">
                         <!-- LastClock, Cake, CalendarMonth, CalendarToday -->
-                        <MudDatePicker Date="GroceryItem.DateCreated.ToLocalTime().DateTime" Label="Date Created" DateFormat="yyyy-MM-dd HH:mm" Disabled="true" />
+                        <MudDatePicker Date="tempGroceryItem.DateCreated.ToLocalTime().DateTime" Label="Date Created" DateFormat="yyyy-MM-dd HH:mm" Disabled="true" />
                     </MudItem>
                     <MudItem sm="12" md="6">
                         <!-- LastClock, Cake, CalendarMonth, CalendarToday -->
-                        <MudDatePicker Date="GroceryItem.DateModified.ToLocalTime().DateTime" Label="Date Modified" DateFormat="yyyy-MM-dd HH:mm" Disabled="true" />
+                        <MudDatePicker Date="tempGroceryItem.DateModified.ToLocalTime().DateTime" Label="Date Modified" DateFormat="yyyy-MM-dd HH:mm" Disabled="true" />
                     </MudItem>
-                    <!-- <MudTextField bind-Value="GroceryItem.IsChecked" Label="IsChecked" ReadOnly="true" /> -->
+                    <!-- <MudTextField bind-Value="tempGroceryItem.IsChecked" Label="IsChecked" ReadOnly="true" /> -->
                     <MudItem sm="12" md="6">
-                        <MudSelect @bind-Value="GroceryItem.Store" Label="Store" Dense="true" Clearable="true"
+                        <MudSelect @bind-Value="tempGroceryItem.Store" Label="Store" Dense="true" Clearable="true"
                                    Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Store">
                             @foreach (string store in Stores)
                             {
@@ -37,7 +37,7 @@
                         </MudSelect>
                     </MudItem>
                     <MudItem sm="12" md="6">
-                        <MudSelect @bind-Value="GroceryItem.Brand" Label="Brand" Dense="true" Clearable="true"
+                        <MudSelect @bind-Value="tempGroceryItem.Brand" Label="Brand" Dense="true" Clearable="true"
                                    Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Business">
                             @foreach (string brand in Brands)
                             {
@@ -46,7 +46,7 @@
                         </MudSelect>
                     </MudItem>
                     <MudItem sm="12" md="6">
-                        <MudSelect @bind-Value="GroceryItem.Department" Label="Department" Dense="true" Clearable="true"
+                        <MudSelect @bind-Value="tempGroceryItem.Department" Label="Department" Dense="true" Clearable="true"
                                    Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Agriculture">
                             @foreach (string department in Departments)
                             {
@@ -55,10 +55,10 @@
                         </MudSelect>
                     </MudItem>
                     <MudItem sm="12" md="6">
-                        <MudNumericField @bind-Value="GroceryItem.Quantity" Adornment="Adornment.Start" Label="Quantity" AdornmentIcon="@(Icons.Material.Filled.Numbers)" />
+                        <MudNumericField @bind-Value="tempGroceryItem.Quantity" Adornment="Adornment.Start" Label="Quantity" AdornmentIcon="@(Icons.Material.Filled.Numbers)" />
                     </MudItem>
                     <MudItem sm="12" md="6">
-                        <MudSelect @bind-Value="GroceryItem.QuantityType" Label="Quantity Type" Dense="true" Clearable="true"
+                        <MudSelect @bind-Value="tempGroceryItem.QuantityType" Label="Quantity Type" Dense="true" Clearable="true"
                                    Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Scale">
                             @foreach (string quantityType in QuantityTypes)
                             {
@@ -69,9 +69,9 @@
                     <MudItem sm="12" md="6">
                         <!-- Casino, Emergency, Visibility, FastForward, Flag, Hourglass -->
                         <MudField Variant="Variant.Text" Adornment="Adornment.Start" Label="High Priority" InnerPadding="false"
-                                  AdornmentIcon="@(GroceryItem.HighPriority is null ? Icons.Material.Filled.Emergency : (GroceryItem.HighPriority.Value ? Icons.Material.Filled.PriorityHigh : Icons.Material.Filled.LowPriority))"
-                                  AdornmentColor="@(GroceryItem.HighPriority is null ? Color.Default : (GroceryItem.HighPriority.Value ? Color.Error : Color.Warning))">
-                            <MudCheckBox @bind-Value="GroceryItem.HighPriority" TriState="true" Dense="true" />
+                                  AdornmentIcon="@(tempGroceryItem.HighPriority is null ? Icons.Material.Filled.Emergency : (tempGroceryItem.HighPriority.Value ? Icons.Material.Filled.PriorityHigh : Icons.Material.Filled.LowPriority))"
+                                  AdornmentColor="@(tempGroceryItem.HighPriority is null ? Color.Default : (tempGroceryItem.HighPriority.Value ? Color.Error : Color.Warning))">
+                            <MudCheckBox @bind-Value="tempGroceryItem.HighPriority" TriState="true" Dense="true" />
                         </MudField>
                     </MudItem>
                 </MudGrid>
@@ -86,7 +86,9 @@
 }
 
 @code {
-    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+    private GroceryItemDto tempGroceryItem = new();
+
+    [CascadingParameter] public required IMudDialogInstance MudDialog { get; set; }
 
     [Parameter, EditorRequired] public GroceryItemDto GroceryItem { get; set; }
     [Parameter, EditorRequired] public Func<string, CancellationToken, Task<IEnumerable<string>>> OnSearchGroceryItems { get; set; }
@@ -97,7 +99,12 @@
     protected IReadOnlyList<string> QuantityTypes { get; set; } = new[] { "Item", "tsp.", "fl oz", "c", "mL", "L", "gal", "lb", "oz", "mg", "g", "kg" };
     protected bool Initialized { get; set; }
 
-    protected override void OnInitialized() => Initialized = true;
+    protected override void OnInitialized()
+    {
+        ApplyGroceryItemValues(GroceryItem, tempGroceryItem);
+
+        Initialized = true;
+    }
 
     /*async Task<IEnumerable<string>> SearchGroceryItems(string value)
     {
@@ -110,10 +117,28 @@
 
     void Save()
     {
-        // TODO: Save item - GroceryItem
+        ApplyGroceryItemValues(tempGroceryItem, GroceryItem);
 
-        MudDialog.Close(); // MudDialog.Close(DialogResult.Ok(1)); // ~1 = Add, 2 = Update, 3 = Delete, 4 = Cancel
+        MudDialog.Close(tempGroceryItem);
     }
 
-    void Cancel() => MudDialog.Cancel();
+    void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    void ApplyGroceryItemValues(GroceryItemDto source, GroceryItemDto destination)
+    {
+        destination.Id = source.Id;
+        destination.Name = source.Name;
+        destination.DateCreated = source.DateCreated;
+        destination.DateModified = source.DateModified;
+        destination.IsChecked = source.IsChecked;
+        destination.Store = source.Store;
+        destination.Brand = source.Brand;
+        destination.Department = source.Department;
+        destination.Quantity = source.Quantity;
+        destination.QuantityType = source.QuantityType;
+        destination.HighPriority = source.HighPriority;
+    }
 }

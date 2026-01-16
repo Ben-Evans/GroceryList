@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using GroceryList.BlazorClient;
 using GroceryList.BlazorClient.Services;
 using Microsoft.AspNetCore.Components.Web;
@@ -15,7 +16,9 @@ builder.Services.AddHttpClient("Default", client => client.BaseAddress = new Uri
 
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("Default"));
 
+builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddSingleton<IOfflineManagerService, OfflineManagerService>();
+builder.Services.AddScoped<UiStateService>();
 
 builder.Services.AddMsalAuthentication(options =>
 {

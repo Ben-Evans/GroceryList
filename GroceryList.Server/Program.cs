@@ -2,6 +2,7 @@ using GroceryList.Server;
 using GroceryList.Server.DataAccess.DomainModels;
 using GroceryList.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using Serilog;
@@ -154,7 +155,7 @@ app.MapPut(ApiEndpointPaths.UpdateGroceryItem, async (GroceryItemDto GroceryItem
 })
 .RequireAuthorization();
 
-app.MapPut(ApiEndpointPaths.UpdateGroceryItemIsChecked2, async (Guid groceryItemId, bool isChecked, IApplicationDbContext dbContext) =>
+app.MapPut(ApiEndpointPaths.GroceryItemUpdateChecked.Replace("{0}", "{groceryItemId}"), async (Guid groceryItemId, [FromBody] bool isChecked, IApplicationDbContext dbContext) =>
 {
     GroceryItem? groceryItem = await dbContext.GroceryItems.AsTracking().FirstOrDefaultAsync(x => x.Id == groceryItemId);
     if (groceryItem is null)

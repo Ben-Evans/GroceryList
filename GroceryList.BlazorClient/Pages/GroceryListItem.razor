@@ -1,0 +1,141 @@
+﻿ @* Disabled="@IsOffline" *@
+
+@*
+@if (UiStateService.IsShoppingMode)
+{
+    <MudText Typo="Typo.body1" Class="@(item.IsChecked ? "grocery-item-name item-checked" : "grocery-item-name")">
+        @item.Name
+        @if (item.Quantity > 0)
+        {
+            <span class="mud-text-secondary small ml-1">(@item.Quantity @item.QuantityType)</span>
+        }
+    </MudText>
+}
+else
+{
+    <MudField Variant="Variant.Text" UnderLine="false" InnerPadding="false" Margin="@Margin.None" Class="w-100"
+                Adornment="@(!IsOffline ? Adornment.End : Adornment.None)" AdornmentIcon="@Icons.Material.Filled.Delete" OnAdornmentClick="@(() => OnDelete(item))">
+        <div @onclick:stopPropagation="true">
+            <MudAutocomplete T="string" @bind-Value="item.Name" @bind-Text="item.Name" OnBlur="@(() => OnUpdate(item))"
+                                SearchFunc="@SearchGroceryItems" SelectOnActivation="false" SelectValueOnTab="true"
+                                Adornment="@(!IsOffline ? Adornment.End : Adornment.None)"
+                                AdornmentIcon="@Icons.Material.Filled.Edit"
+                                OnAdornmentClick="@(() => OpenItemDetails(item))" />
+        </div>
+    </MudField>
+}*@
+
+<MudListItem T="string" IconColor="Color.Dark" IconSize="@(!IsMobile ? Size.Medium : Size.Small)" Dense="true" Gutters="false">
+    <!--<AvatarContent>
+        <MudAvatar Square="true">
+            <MudIcon Icon="@Icons.Material.Filled.BrokenImage" />
+        </MudAvatar>
+    </AvatarContent>
+    <ChildContent>-->
+        <MudSwipeArea OnSwipeEnd="@HandleSwipe">
+            <MudField Variant="Variant.Outlined" UnderLine="false" InnerPadding="false"
+                        Adornment="Adornment.Start" AdornmentColor="Color.Primary" OnAdornmentClick="@HandleCheck" IconSize="@(!IsMobile ? Size.Medium : Size.Small)"
+                        AdornmentIcon="@(GroceryItemDto.IsChecked ? Icons.Material.Filled.CheckBox : Icons.Material.Filled.CheckBoxOutlineBlank)">
+
+                <MudField Variant="Variant.Text" Underline="false" InnerPadding="false" Margin="@Margin.None"
+                            Adornment="@(!IsShoppingMode ? Adornment.End : Adornment.None)" AdornmentIcon="@Icons.Material.Filled.Delete" OnAdornmentClick="@HandleDelete">
+
+                    <MudAutocomplete T="string" @bind-Value="GroceryItemDto.Name" @bind-Text="GroceryItemDto.Name" OnBlur="@HandleUpdate" SearchFunc="@SearchGroceryItems"
+                                        Dense="true" Margin="@Margin.None" Immediate="true" Required="true" SelectOnActivation="false" SelectValueOnTab="false" ReadOnly="@IsShoppingMode" Underline="@(!IsShoppingMode)"
+                                        Adornment="@(!IsShoppingMode ? Adornment.End : Adornment.None)" AdornmentIcon="@(!IsShoppingMode ? Icons.Material.Filled.Edit : default)" OnAdornmentClick="@HandleOpenItemDetails" />
+                </MudField>
+                                
+                @if (!string.IsNullOrWhiteSpace(GroceryItemDto.Department))
+                {
+                    <!-- Category | Agriculture, Liquor, Pets, Yard -->
+                    <MudChip T="string" Icon="@Icons.Material.Filled.Category" Color="Color.Tertiary" Size="@(!IsMobile ? Size.Medium : Size.Small)" Label="true">@GroceryItemDto.Department</MudChip>
+                }
+
+                @if (GroceryItemDto.HighPriority is not null)
+                {
+                    <MudChip T="string" Icon="@(GroceryItemDto.HighPriority.Value ? Icons.Material.Filled.PriorityHigh : Icons.Material.Filled.LowPriority)"
+                                Color="@(GroceryItemDto.HighPriority.Value ? Color.Error : Color.Success)" Size="@(!IsMobile ? Size.Medium : Size.Small)" Label="true">
+                        Priority
+                    </MudChip>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(GroceryItemDto.Store))
+                {
+                    <!-- Store, Place -->
+                    <MudChip T="string" Icon="@Icons.Material.Filled.Store" IconColor="Color.Info" Size="@(!IsMobile ? Size.Medium : Size.Small)" Label="true">@GroceryItemDto.Store</MudChip>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(GroceryItemDto.Brand))
+                {
+                    <!-- Business, Shop, ShippingBag, ShoppingBasket, ShoppingCart, Work -->
+                    <MudChip T="string" Icon="@Icons.Material.Filled.Business" Color="Color.Warning" Size="@(!IsMobile ? Size.Medium : Size.Small)" Label="true">@GroceryItemDto.Brand</MudChip>
+                }
+
+                @if (GroceryItemDto.Quantity > 0)
+                {
+                    <!-- Analytics, Architecture, Balance, Scale -->
+                    <MudChip T="string" Icon="@Icons.Material.Filled.Scale" Color="Color.Secondary" Size="@(!IsMobile ? Size.Medium : Size.Small)" Label="true">@GroceryItemDto.Quantity @GroceryItemDto.QuantityType</MudChip>
+                }
+            </MudField>
+        </MudSwipeArea>
+    <!--</ChildContent>-->
+</MudListItem>
+
+@code {
+    [Parameter] public ISnackbar MudSnackbar { get; set; }
+
+    [Parameter] public GroceryItemDto GroceryItemDto { get; set; }
+
+    [Parameter] public bool IsMobile { get; set; }
+    [Parameter] public bool IsShoppingMode { get; set; }
+
+    // [Parameter] public bool IsOffline { get; set; }
+
+    [Parameter] public EventCallback<GroceryItemDto> OnCheck { get; set; }
+
+    [Parameter] public EventCallback<GroceryItemDto> OnDelete { get; set; }
+
+    [Parameter] public EventCallback<GroceryItemDto> OnUpdate { get; set; }
+
+    [Parameter] public EventCallback<GroceryItemDto> OpenItemDetails { get; set; }
+
+    [Parameter] public Func<string, CancellationToken, Task<IEnumerable<string>>> SearchGroceryItems { get; set; }
+
+    private Task HandleCheck() => OnCheck.InvokeAsync(GroceryItemDto);
+    private Task HandleDelete() => OnDelete.InvokeAsync(GroceryItemDto);
+    private Task HandleUpdate() => OnUpdate.InvokeAsync(GroceryItemDto);
+    private Task HandleOpenItemDetails() => OpenItemDetails.InvokeAsync(GroceryItemDto);
+
+    private Task HandleSwipe(SwipeEventArgs swipeEvent)
+    {
+        if (!IsMobile)
+            return Task.CompletedTask;
+
+        string itemName = !string.IsNullOrWhiteSpace(GroceryItemDto.Name) ? GroceryItemDto.Name : "Item";
+        if (swipeEvent.SwipeDirection == SwipeDirection.LeftToRight)
+        {
+            // TODO: The snackbar shouldn't fire from here, but from OnCheck and same with OnDelete
+            bool newCheckStatus = !GroceryItemDto.IsChecked;
+
+            string checkActionMessage = newCheckStatus ? "Checking" : "Unchecking";
+            string checkMessage = $"{checkActionMessage} {itemName}";
+            string checkIcon = newCheckStatus ? Icons.Material.Filled.CheckBox : Icons.Material.Filled.CheckBoxOutlineBlank;
+
+            Console.WriteLine($"Right Swipe: {checkMessage}");
+            MudSnackbar.Add(checkMessage, Severity.Success, x => x.Icon = checkIcon);
+
+            return OnCheck.InvokeAsync(GroceryItemDto);
+        }
+        else if (swipeEvent.SwipeDirection == SwipeDirection.RightToLeft)
+        {
+            string deleteMessage = $"Deleting {itemName}";
+
+            Console.WriteLine($"Left Swipe: {deleteMessage}");
+            MudSnackbar.Add(deleteMessage, Severity.Error, x => x.Icon = Icons.Material.Filled.Delete);
+
+            return OnDelete.InvokeAsync(GroceryItemDto);
+        }
+
+        return Task.CompletedTask;
+    }
+}
